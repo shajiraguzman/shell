@@ -13,7 +13,7 @@ Other commands that were initially included can also run:
 2. env
 3. exit
 
-
+Used chatGPT to help parse the strings for the Alias and Export functions.
 
 Run program as:
 
