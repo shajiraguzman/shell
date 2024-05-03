@@ -75,7 +75,7 @@ func storeCommand(input string) {
 }
 
 func handleInput(w io.Writer, input string, exit chan<- struct{}) error {
-	testing testing
+	
 	sh := os.Getenv("SHELL") //fetch default shell
 
 	// Remove trailing spaces.
