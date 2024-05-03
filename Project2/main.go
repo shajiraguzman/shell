@@ -9,8 +9,11 @@ import (
 	"os/user"
 	"strings"
 
-	"github.com/shajiraguzman/shell"
+	"github.com/shajiraguzman/shell/Project2/builtins"
 )
+
+var commands [][]string               //store all commands
+var alias = make(map[string][]string) //store all aliases created
 
 func main() {
 	exit := make(chan struct{}, 2) // buffer this so there's no deadlock.
@@ -63,27 +66,56 @@ func printPrompt(w io.Writer) error {
 	return err
 }
 
+func storeCommand(input string) {
+
+	args := strings.Split(input, " ")
+	args = args[0:] //, args[1:]
+	commands = append(commands, args[0:])
+
+}
+
 func handleInput(w io.Writer, input string, exit chan<- struct{}) error {
+
+	sh := os.Getenv("SHELL") //fetch default shell
+
 	// Remove trailing spaces.
 	input = strings.TrimSpace(input)
-
-	// Split the input separate the command name and the command arguments.
+	storeCommand(input)
 	args := strings.Split(input, " ")
 	name, args := args[0], args[1:]
 
 	// Check for built-in commands.
 	// New builtin commands should be added here. Eventually this should be refactored to its own func.
+
+	//check if command is an alias first
+	if value, ok := alias[name]; ok {
+		name, args = value[0], value[1:]
+	}
+
 	switch name {
 	case "cd":
 		return builtins.ChangeDirectory(args...)
 	case "env":
 		return builtins.EnvironmentVariables(w, args...)
+	case "history":
+		return builtins.History(commands)
+	case "!":
+		return builtins.History(commands, args...)
+	case "alias":
+		return builtins.Alias(input, alias)
+	case "test":
+		return executeCommand(sh, "-c", `"declare"`)
+	case "echo":
+		return builtins.Echo(executeCommand, input, name, args...)
+	case "pwd":
+		return builtins.Pwd()
 	case "exit":
 		exit <- struct{}{}
 		return nil
 	}
 
 	return executeCommand(name, args...)
+
 }
 
 func executeCommand(name string, arg ...string) error {
